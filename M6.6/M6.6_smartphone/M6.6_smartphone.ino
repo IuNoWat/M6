@@ -21,14 +21,31 @@
 
 Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
-int time = 452 ;
+int total_time = 5;
+int time;
+
+void show_end(){
+  tft.setRotation(1);
+  tft.fillScreen(BLACK);
+  tft.setTextColor(WHITE);
+  tft.setTextSize(3);
+  tft.setCursor(45,40);
+  tft.println("Cet appareil");
+  tft.setCursor(30,75);
+  tft.println("est trop vieux");
+
+  tft.setTextSize(3);
+  tft.setCursor(0,140);
+  tft.println("Jetez-le et allezen acheter un    autre.");
+  delay(10000);
+}
 
 void set_style(){
   tft.setRotation(1);
   tft.fillScreen(BLACK);
   tft.setTextColor(WHITE);
   tft.setTextSize(8);
-  tft.setCursor(40,90);
+  tft.setCursor(35,90);
 }
 
 String get_str_time(){
@@ -54,15 +71,26 @@ void setup() {
   uint16_t identifier = tft.readID();
 
   tft.begin(identifier);
+
+  time = total_time;
   
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  set_style();
+  
+  String to_print = get_str_time();
 
-  tft.println(get_str_time());
-  delay(1000);
-  time=time-1;
+  if(to_print=="00:00"){
+    show_end();
+    time = total_time;
+  } else {
+    set_style();
+    tft.println(to_print);
+    delay(1000);
+    time=time-1;
+  }
+
+  
 
 }
