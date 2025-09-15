@@ -6,6 +6,7 @@ import spidev as SPI
 from PIL import Image,ImageDraw,ImageFont
 import pygame
 import gpiozero as gpio
+import rpi_ws281x as rpi
 
 from lib import LCD_1inch28
 
@@ -20,6 +21,9 @@ try :
         DEBUG=True
 except IndexError :
     DEBUG=False
+
+#M6.3
+nb_led_gamer = 8
 
 #DATA
 
@@ -39,15 +43,15 @@ txt_6 = [
 M6_1_BTN = "BOARD29"
 M6_2_BTN = "BOARD33"
 M6_3_BTN = "BOARD37"
-M6_6_BTN = "BOARD32"
+M6_6_BTN = "BOARD18"
 M6_7_BTN = "BOARD31"
 M6_8_BTN = "BOARD27"
 M6_9_BTN = "BOARD28"
 
 #Others
-M6_1_BUZZ = "BOARD18"
+#M6_1_BUZZ = "BOARD18"
 M6_2_LGT = "BOARD35"
-#M6_3_LEDS = "BOARD18"
+M6_3_LEDS = 12 # BOARD32
 M6_7_VENT ="BOARD36"
 M6_8_LGT = "BOARD40"
 M6_9_LGT ="BOARD38"
@@ -75,10 +79,44 @@ class Light() :
         self.lgt = gpio.OutputDevice(mofset_pin)
     def update(self) :
         if self.btn.is_pressed :
-            print("COUCOU")
             self.lgt.off()
         else :
             self.lgt.on()
+
+#M6.3
+strip = rpi.PixelStrip(nb_led_gamer,M6_3_LEDS)
+strip.begin()
+
+LED_BLACK=rpi.Color(0,0,0)
+LED_WHITE=rpi.Color(255,255,255)
+
+frames = [
+    [LED_WHITE,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK],
+    [LED_BLACK,LED_WHITE,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK],
+    [LED_BLACK,LED_BLACK,LED_WHITE,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK],
+    [LED_BLACK,LED_BLACK,LED_BLACK,LED_WHITE,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK],
+    [LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_WHITE,LED_BLACK,LED_BLACK,LED_BLACK],
+    [LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_WHITE,LED_BLACK,LED_BLACK],
+    [LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_WHITE,LED_BLACK],
+    [LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_BLACK,LED_WHITE]
+]
+
+def show_led_frame(frame) :
+    for i in range(0,nb_led_gamer) :
+        strip.setPixelColor(i,LED_BLACK)
+    for i,led in enumerate(frame) :
+        strip.setPixelColor(i,led)
+    strip.show()
+
+current_led_frame = 0
+
+def show_next_frame() :
+    global current_led_frame
+    show_led_frame(frames[current_led_frame])
+    current_led_frame +=1
+    if len(frames)<=current_led_frame :
+        current_led_frame=0
+
 
 #M6.6
 total_time_6 = 5
@@ -162,6 +200,9 @@ on=True
 SCREEN = pygame.display.set_mode(SCREEN_SIZE,pygame.FULLSCREEN)
 CLOCK = pygame.time.Clock()
 
+#Btns
+M6_3_btn = gpio.Button(M6_3_BTN)
+
 #Lights
 LIGHTS = [
     Light(M6_2_BTN,M6_2_LGT),
@@ -169,8 +210,6 @@ LIGHTS = [
     Light(M6_8_BTN,M6_8_LGT),
     Light(M6_9_BTN,M6_9_LGT)
 ]
-
-
 
 #MAINLOOP
 
@@ -189,6 +228,10 @@ while on :
     #CHECK LIGHTS
     for light in LIGHTS :
         light.update()
+    
+    #UPDATE M6_3
+    if M6_3_btn.is_pressed==False :
+        show_next_frame()
 
     #UPDATE M6_6
     update_6()
@@ -202,6 +245,7 @@ while on :
         print("GENERAL GPIO STATUS")
         for light in LIGHTS :
             print(f"Button {light.btn_pin} : {light.btn.is_pressed}")
+        #show_next_frame()
 
 
     #End of loop
