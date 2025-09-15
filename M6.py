@@ -9,6 +9,7 @@ import gpiozero as gpio
 import rpi_ws281x as rpi
 
 from lib import LCD_1inch28
+import buzzer_zero as buzzer
 
 #CONSTANTS
 FPS = 30
@@ -41,7 +42,7 @@ txt_6 = [
 
 #Buttons
 M6_1_BTN = "BOARD29"
-M6_2_BTN = "BOARD33"
+M6_2_BTN = "BOARD11"
 M6_3_BTN = "BOARD37"
 M6_6_BTN = "BOARD18"
 M6_7_BTN = "BOARD31"
@@ -49,7 +50,7 @@ M6_8_BTN = "BOARD27"
 M6_9_BTN = "BOARD28"
 
 #Others
-#M6_1_BUZZ = "BOARD18"
+M6_1_BUZZ = "BOARD33"
 M6_2_LGT = "BOARD35"
 M6_3_LEDS = 12 # BOARD32
 M6_7_VENT ="BOARD36"
@@ -82,6 +83,12 @@ class Light() :
             self.lgt.off()
         else :
             self.lgt.on()
+
+#M6.1
+M6_1_buzzer = buzzer.Sound(buzzer.default_music)
+M6_1_btn = gpio.Button(M6_1_BTN)
+M6_1_btn.when_pressed = M6_1_buzzer.start
+
 
 #M6.3
 strip = rpi.PixelStrip(nb_led_gamer,M6_3_LEDS)
@@ -245,7 +252,7 @@ while on :
         print("GENERAL GPIO STATUS")
         for light in LIGHTS :
             print(f"Button {light.btn_pin} : {light.btn.is_pressed}")
-        #show_next_frame()
+        
 
 
     #End of loop
