@@ -5,6 +5,7 @@ import time
 import spidev as SPI
 from PIL import Image,ImageDraw,ImageFont
 import pygame
+import gpiozero as gpio
 
 from lib import LCD_1inch28
 
@@ -34,13 +35,22 @@ txt_6 = [
 
 #GPIO
 
-#M6.1
+#Buttons
+M6_1_BTN = "BOARD29"
+M6_2_BTN = "BOARD33"
+M6_3_BTN = "BOARD37"
+M6_6_BTN = "BOARD32"
+M6_7_BTN = "BOARD31"
+M6_8_BTN = "BOARD27"
+M6_9_BTN = "BOARD28"
 
-
-
-#M6.2
-
-#M6.3
+#Others
+M6_1_BUZZ = "BOARD18"
+M6_2_LGT = "BOARD35"
+#M6_3_LEDS = "BOARD18"
+M6_7_VENT ="BOARD36"
+M6_8_LGT = "BOARD40"
+M6_9_LGT ="BOARD38"
 
 #M6.6
 RST = 27
@@ -54,6 +64,21 @@ device = 0
 
 #General
 current_frame=0
+
+#Lights
+
+class Light() :
+    def __init__(self,btn_pin,mofset_pin) :
+        self.btn_pin = btn_pin
+        self.mofset_pin = mofset_pin
+        self.btn = gpio.Button(btn_pin)
+        self.lgt = gpio.OutputDevice(mofset_pin)
+    def update(self) :
+        if self.btn.is_pressed :
+            print("COUCOU")
+            self.lgt.off()
+        else :
+            self.lgt.on()
 
 #M6.6
 total_time_6 = 5
@@ -69,7 +94,6 @@ disp.clear() # Clear display.
 font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",80)
 #Text font
 txt_font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",30)
-
 
 def get_time() : #Get time as showable string
     str_min = str(int(current_time_6/60))
@@ -138,6 +162,16 @@ on=True
 SCREEN = pygame.display.set_mode(SCREEN_SIZE,pygame.FULLSCREEN)
 CLOCK = pygame.time.Clock()
 
+#Lights
+LIGHTS = [
+    Light(M6_2_BTN,M6_2_LGT),
+    Light(M6_7_BTN,M6_7_VENT),
+    Light(M6_8_BTN,M6_8_LGT),
+    Light(M6_9_BTN,M6_9_LGT)
+]
+
+
+
 #MAINLOOP
 
 while on :
@@ -152,6 +186,10 @@ while on :
         if keys[pygame.K_ESCAPE] : # ECHAP : Quitter
             on=False
     
+    #CHECK LIGHTS
+    for light in LIGHTS :
+        light.update()
+
     #UPDATE M6_6
     update_6()
 
@@ -161,6 +199,10 @@ while on :
         txt = f"DEBUG MODE | FPS : {FPS} | current_frame : {current_frame}"
         to_blit=debug_font.render(txt,1,WHITE,COLOR_BG)
         SCREEN.blit(to_blit,(0,0))
+        print("GENERAL GPIO STATUS")
+        for light in LIGHTS :
+            print(f"Button {light.btn_pin} : {light.btn.is_pressed}")
+
 
     #End of loop
     pygame.display.update()
