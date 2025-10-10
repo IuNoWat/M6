@@ -16,6 +16,9 @@ FPS = 30
 DIR="/home/pi/Desktop/"
 SCREEN_SIZE=(1600, 900)
 FULLSCREEN=True
+TOTAL_DURATION = 20 #Total anim duration in seconds
+total_time_6 = 145
+text_waiting_time_6 = 5
 #Define DEBUG
 try :
     if sys.argv[1]=="debug" :
@@ -70,6 +73,12 @@ device = 0
 #General
 current_frame=0
 
+def update_current_frame() :
+    global current_frame
+    current_frame+=1
+    if current_frame==TOTAL_DURATION*FPS :
+        current_frame=0
+
 #Lights
 
 class Light() :
@@ -84,10 +93,19 @@ class Light() :
         else :
             self.lgt.on()
 
-#M6.1
-M6_1_buzzer = buzzer.Sound(buzzer.default_music)
+#-----M6.1-----#
+
+def play_sound() :
+    M6_1_buzzer = buzzer.Sound(random.choice(buzzer.notifs))
+    M6_1_buzzer.start()
+
+def update_1() :
+    if current_frame%(FPS)==0 :
+        play_sound()
+
 M6_1_btn = gpio.Button(M6_1_BTN)
-M6_1_btn.when_pressed = M6_1_buzzer.start
+#M6_1_btn.when_pressed = play_sound
+
 
 
 #M6.3
@@ -124,12 +142,16 @@ def show_next_frame() :
     if len(frames)<=current_led_frame :
         current_led_frame=0
 
+def show_black_frame() :
+    for i in range(0,nb_led_gamer) :
+        strip.setPixelColor(i,LED_BLACK)
+    strip.show()
 
 #M6.6
-total_time_6 = 5
+M6_6_btn = gpio.Button(M6_6_BTN)
+
 current_time_6=total_time_6
 text_timer_6=0
-text_waiting_time_6 = 5
 mode_6 = "COUNTDOWN"
 # Launching round display
 disp = LCD_1inch28.LCD_1inch28()
@@ -154,39 +176,43 @@ def show_time() : #Show time on round display
     to_show=get_time()
     img = Image.new("RGB", (disp.width, disp.height), "BLACK") # Create blank image for drawing.
     draw = ImageDraw.Draw(img)
-    draw.text((30, 60), to_show, fill = (255,255,255),font=font)
+    if M6_6_btn.is_pressed :
+        draw.text((30, 60), to_show, fill = (255,255,255),font=font)
     disp.ShowImage(img)
 
 def show_txt() : #Show text on round display
     img = Image.new("RGB", (disp.width, disp.height), "BLACK") # Create blank image for drawing.
     draw = ImageDraw.Draw(img)
-    draw.text((35, 50), txt_6[0], fill = (255,255,255),font=txt_font)
-    draw.text((35, 70), txt_6[1], fill = (255,255,255),font=txt_font)
-    draw.text((20, 120), txt_6[2], fill = (255,255,255),font=txt_font)
-    draw.text((30, 140), txt_6[3], fill = (255,255,255),font=txt_font)
-    draw.text((80, 160), txt_6[4], fill = (255,255,255),font=txt_font)
+    if M6_6_btn.is_pressed :
+        draw.text((35, 50), txt_6[0], fill = (255,255,255),font=txt_font)
+        draw.text((35, 70), txt_6[1], fill = (255,255,255),font=txt_font)
+        draw.text((20, 120), txt_6[2], fill = (255,255,255),font=txt_font)
+        draw.text((30, 140), txt_6[3], fill = (255,255,255),font=txt_font)
+        draw.text((80, 160), txt_6[4], fill = (255,255,255),font=txt_font)
     disp.ShowImage(img)
 
 def update_6() :
     global mode_6
     global current_time_6
-    global text_timer_6
+    global text_timer_6   
     if mode_6=="COUNTDOWN" :
         if current_frame%FPS==0 :
-            if current_time_6==0 :
+            if M6_6_btn.is_pressed :
                 disp.clear() # Clear display.
+            current_time_6-=1            
+            if current_time_6>0 :
+                show_time()
+            else :
                 show_txt()
                 mode_6="TEXT"
                 text_timer_6=0
-            else :
-                disp.clear() # Clear display.
-                show_time()
-                current_time_6-=1
     else :
         text_timer_6+=1
-        if text_timer_6==text_waiting_time_6*FPS :
+        if text_timer_6>text_waiting_time_6*FPS :
             mode_6="COUNTDOWN"
             current_time_6=total_time_6
+            
+    
 
 
 #STYLE
@@ -235,13 +261,22 @@ while on :
     #CHECK LIGHTS
     for light in LIGHTS :
         light.update()
+
+    #UPDATE M6_1
+    if M6_1_btn.is_pressed :
+        update_1()
     
     #UPDATE M6_3
     if M6_3_btn.is_pressed==False :
         show_next_frame()
+    else :
+        show_black_frame()
 
     #UPDATE M6_6
     update_6()
+
+    #UPDATE CURRENT_FRAME
+    update_current_frame()
 
     #Show DEBUG
     if DEBUG :
@@ -249,6 +284,7 @@ while on :
         txt = f"DEBUG MODE | FPS : {FPS} | current_frame : {current_frame}"
         to_blit=debug_font.render(txt,1,WHITE,COLOR_BG)
         SCREEN.blit(to_blit,(0,0))
+        print(f"DEBUG MODE | FPS : {FPS} | current_frame : {current_frame}")
         print("GENERAL GPIO STATUS")
         for light in LIGHTS :
             print(f"Button {light.btn_pin} : {light.btn.is_pressed}")
@@ -258,4 +294,3 @@ while on :
     #End of loop
     pygame.display.update()
     CLOCK.tick(FPS)
-    current_frame+=1
