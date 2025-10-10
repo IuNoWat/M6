@@ -25,6 +25,7 @@ int time = 10;
 int time_until_update = 0;
 String serial_msg;
 String incomingByte;
+String msg_at_gate = "";
 
 void show_end(){
   tft.setRotation(1);
@@ -83,6 +84,15 @@ String get_str_time(){
   return to_return;
 }
 
+bool gate(String letter){
+  msg_at_gate+=letter;
+  if(letter=="#"){
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void setup() {
   Serial.begin(9600);
   Serial.setTimeout(1);
@@ -96,39 +106,16 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  //
-  incomingByte = Serial.readStringUntil("#");
-  incomingByte.remove(incomingByte.length()-1);
-  if(incomingByte.length()>0){
-    tft.fillScreen(BLACK);
-    set_style();
-    tft.print(incomingByte);
-  } else {
-    //tft.fillScreen(BLACK);
-    set_style();
-    tft.print(incomingByte.length());
+  
+  if(Serial.available()){
+    if(gate(Serial.readString())){
+      Serial.println(msg_at_gate);
+      
+      tft.fillScreen(BLACK);
+      set_style();
+      msg_at_gate.remove(msg_at_gate.length()-1);
+      tft.print(msg_at_gate);
+      msg_at_gate="";
+    } 
   }
-
-  //tft.fillScreen(BLACK);
-  //update_serial_msg();
-  //msg_to_time();
-  //show_time();
-  //delay(1000);
-
-  //if(time_from_serial==999 & time==-1){
-  //  set_style();
-  //  tft.print("NO");
-  //} else {
-  //  time=time_from_serial;
-  //  String to_print = get_str_time();
-  //  if(to_print=="00:00"){
-  //    show_end();
-  //  } else {
-  //    set_style();
-  //    tft.print(to_print);
-  //  }
-  //}
-
-
 }

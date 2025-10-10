@@ -41,18 +41,6 @@ void show_end(){
   delay(10000);
 }
 
-String show_serial_input() {
-  tft.setRotation(1);
-  tft.fillScreen(BLACK);
-  tft.setTextColor(WHITE);
-  tft.setTextSize(2);
-  tft.setCursor(0,20);
-  serial_msg = Serial.readStringUntil("#");
-  serial_msg.remove(serial_msg.length()-1);
-  tft.println(serial_msg);
-  return serial_msg;
-}
-
 void set_style(){
   tft.setRotation(1);
   tft.fillScreen(BLACK);
