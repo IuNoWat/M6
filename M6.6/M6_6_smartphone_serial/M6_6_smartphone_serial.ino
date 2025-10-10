@@ -21,13 +21,13 @@
 
 Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
 
-int total_time = 93;
-int time;
+int time = 10;
+int time_until_update = 0;
 String serial_msg;
+String incomingByte;
 
 void show_end(){
   tft.setRotation(1);
-  tft.fillScreen(BLACK);
   tft.setTextColor(WHITE);
   tft.setTextSize(3);
   tft.setCursor(45,40);
@@ -38,24 +38,31 @@ void show_end(){
   tft.setTextSize(3);
   tft.setCursor(0,140);
   tft.println("Jetez-le et allezen acheter un    autre.");
-  delay(10000);
 }
 
-String show_serial_input() {
+void update_serial_msg() {
+  serial_msg = Serial.readStringUntil("#");
+  serial_msg.remove(serial_msg.length()-1);
+}
+
+void msg_to_time() {
+  if(serial_msg!=""){
+    time = serial_msg.toInt();
+  } else {
+    time = 999;
+  }
+}
+
+String show_time() {
   tft.setRotation(1);
-  tft.fillScreen(BLACK);
   tft.setTextColor(WHITE);
   tft.setTextSize(2);
   tft.setCursor(0,20);
-  serial_msg = Serial.readStringUntil("#");
-  serial_msg.remove(serial_msg.length()-1);
-  tft.println(serial_msg);
-  return serial_msg;
+  tft.println(time);
 }
 
 void set_style(){
   tft.setRotation(1);
-  tft.fillScreen(BLACK);
   tft.setTextColor(WHITE);
   tft.setTextSize(8);
   tft.setCursor(35,90);
@@ -85,30 +92,43 @@ void setup() {
   uint16_t identifier = tft.readID();
 
   tft.begin(identifier);
-
-  time = total_time;
   
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  
-  String to_print = get_str_time();
-  if(to_print=="00:00"){
-    show_end();
-    time = total_time;
-  } else {
+  //
+  incomingByte = Serial.readStringUntil("#");
+  incomingByte.remove(incomingByte.length()-1);
+  if(incomingByte.length()>0){
+    tft.fillScreen(BLACK);
     set_style();
-    tft.println(to_print);
-    delay(1000);
-    time=time-1;
+    tft.print(incomingByte);
+  } else {
+    //tft.fillScreen(BLACK);
+    set_style();
+    tft.print(incomingByte.length());
   }
-  //if(show_serial_input()!=""){
-  //  delay(1000);
-  //}
-  ;
+
+  //tft.fillScreen(BLACK);
+  //update_serial_msg();
+  //msg_to_time();
+  //show_time();
   //delay(1000);
 
-  
+  //if(time_from_serial==999 & time==-1){
+  //  set_style();
+  //  tft.print("NO");
+  //} else {
+  //  time=time_from_serial;
+  //  String to_print = get_str_time();
+  //  if(to_print=="00:00"){
+  //    show_end();
+  //  } else {
+  //    set_style();
+  //    tft.print(to_print);
+  //  }
+  //}
+
 
 }
