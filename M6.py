@@ -1,12 +1,14 @@
 import sys
 import random
 import time
+from threading import Thread
 
 import spidev as SPI
 from PIL import Image,ImageDraw,ImageFont
 import pygame
 import gpiozero as gpio
 import rpi_ws281x as rpi
+import serial
 
 from lib import LCD_1inch28
 import buzzer_zero as buzzer
@@ -17,7 +19,7 @@ DIR="/home/pi/Desktop/"
 SCREEN_SIZE=(1600, 900)
 FULLSCREEN=True
 TOTAL_DURATION = 20 #Total anim duration in seconds
-total_time_6 = 145
+total_time_6 = 5
 text_waiting_time_6 = 5
 #Define DEBUG
 try :
@@ -108,7 +110,7 @@ M6_1_btn = gpio.Button(M6_1_BTN)
 
 
 
-#M6.3
+#-----M6.3-----#
 strip = rpi.PixelStrip(nb_led_gamer,M6_3_LEDS)
 strip.begin()
 
@@ -147,7 +149,8 @@ def show_black_frame() :
         strip.setPixelColor(i,LED_BLACK)
     strip.show()
 
-#M6.6
+#-----M6.6-----#
+
 M6_6_btn = gpio.Button(M6_6_BTN)
 
 current_time_6=total_time_6
@@ -161,6 +164,21 @@ disp.clear() # Clear display.
 font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",80)
 #Text font
 txt_font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",30)
+
+class Smartphone(Thread) :
+    def __init__(self,port="/dev/ttyACM0",baudrate=9600) :
+        Thread.__init__(self)
+        self.api=serial.Serial(port,baudrate,timeout=1)
+        self.on=True
+    def run(self) :
+        while self.on :
+            pass
+    def send_msg(self,msg:str) :
+        print(f"Sending data : {msg}")
+        msg=msg+"#"
+        self.api.write(bytes(msg,"utf-8"))
+
+smart = Smartphone()
 
 def get_time() : #Get time as showable string
     str_min = str(int(current_time_6/60))
@@ -176,19 +194,21 @@ def show_time() : #Show time on round display
     to_show=get_time()
     img = Image.new("RGB", (disp.width, disp.height), "BLACK") # Create blank image for drawing.
     draw = ImageDraw.Draw(img)
-    if M6_6_btn.is_pressed :
-        draw.text((30, 60), to_show, fill = (255,255,255),font=font)
+    if M6_6_btn.is_pressed==False :
+        draw.text((30, 65), to_show, fill = (255,255,255),font=font)
+        smart.send_msg(to_show)
     disp.ShowImage(img)
 
 def show_txt() : #Show text on round display
     img = Image.new("RGB", (disp.width, disp.height), "BLACK") # Create blank image for drawing.
     draw = ImageDraw.Draw(img)
-    if M6_6_btn.is_pressed :
+    if M6_6_btn.is_pressed==False :
         draw.text((35, 50), txt_6[0], fill = (255,255,255),font=txt_font)
         draw.text((35, 70), txt_6[1], fill = (255,255,255),font=txt_font)
         draw.text((20, 120), txt_6[2], fill = (255,255,255),font=txt_font)
         draw.text((30, 140), txt_6[3], fill = (255,255,255),font=txt_font)
         draw.text((80, 160), txt_6[4], fill = (255,255,255),font=txt_font)
+        smart.send_msg("MEH")
     disp.ShowImage(img)
 
 def update_6() :
@@ -197,8 +217,9 @@ def update_6() :
     global text_timer_6   
     if mode_6=="COUNTDOWN" :
         if current_frame%FPS==0 :
-            if M6_6_btn.is_pressed :
+            if M6_6_btn.is_pressed==False :
                 disp.clear() # Clear display.
+                #smart.send_msg("")
             current_time_6-=1            
             if current_time_6>0 :
                 show_time()
