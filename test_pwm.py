@@ -4,7 +4,7 @@ import time
 range_led = 10
 frame = 0.2
 
-strip = rpi.PixelStrip(range_led,10)
+strip = rpi.PixelStrip(range_led,12)
 
 strip.begin()
 
