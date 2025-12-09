@@ -27,7 +27,8 @@ except IndexError :
 
 #GPIO Config
 #D.2.1 - Boite Mail
-buzzer_2 = gpio.TonalBuzzer(settings.GPIO_BUZZER_1,octaves=3)
+buzzer_1 = buzzer_api.Buzzer(settings.GPIO_BUZZER_1)
+buzzer_1.start()
 
 #D.2.2 - Cookies
 
@@ -58,8 +59,7 @@ server_fan = gpio.OutputDevice(settings.GPIO_FAN_7)
 #D.2.1 - Boite Mail
 
 def play_notif() :
-    M6_1_buzzer = buzzer_api.Sound(buzzer_2,random.choice(settings.buzzer_notif_sounds))
-    M6_1_buzzer.start()
+    buzzer_1.play(random.choice(settings.buzzer_notif_sounds))
 
 index_1 = 0
 
@@ -131,7 +131,7 @@ def get_countdown_as_string() : #Get time as showable string
 disp = LCD_1inch28.LCD_1inch28()
 disp.Init() # Initialize library.
 disp.clear() # Clear display.
-font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",80) #Countdown font
+font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",100) #Countdown font
 txt_font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",30) #Text font
 
 def write_time_on_watch() : #Show time on round display
@@ -162,7 +162,6 @@ class Smartphone(Thread) :
         while self.on :
             pass
     def send_msg(self,msg:str) :
-        print(f"Sending data : {msg}")
         msg=msg+"#"
         self.api.write(bytes(msg,"utf-8"))
 
@@ -173,19 +172,19 @@ def write_on_smartphone(txt) :
 
 ## TABLET
 pygame.init()
-tablet_screen = pygame.display.set_mode(settings.SCREEN_SIZE)
+tablet_screen = pygame.display.set_mode(settings.SCREEN_SIZE,pygame.FULLSCREEN)
 pygame.font.init()
-tablet_font=pygame.font.Font("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",40)
+tablet_num_font=pygame.font.Font("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",300)
+tablet_txt_font=pygame.font.Font("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",100)
 
 def write_time_on_tablet() :
-    to_blit = tablet_font.render(get_countdown_as_string(),1,pygame.Color("White"),pygame.Color("Black"))
+    to_blit = tablet_num_font.render(get_countdown_as_string(),1,pygame.Color("White"),pygame.Color("Black"))
     center_blit(tablet_screen,to_blit,(settings.SCREEN_SIZE[0]/2,settings.SCREEN_SIZE[1]/2))
     
-
 def write_text_on_tablet() :
-    to_blit = tablet_font.render("OBSOLLESCENCE NULLE",1,pygame.Color("White"),pygame.Color("Black"))
-    center_blit(tablet_screen,to_blit,(settings.SCREEN_SIZE[0]/2,settings.SCREEN_SIZE[1]/2))
-    pygame.display.update()
+    for i,line in enumerate(settings.txt_6) :
+        to_blit = tablet_txt_font.render(line,1,pygame.Color("White"),pygame.Color("Black"))
+        center_blit(tablet_screen,to_blit,(settings.SCREEN_SIZE[0]/2,90+i*110))
 
 index_6 = 0
 
@@ -195,12 +194,13 @@ def update_6() :
     global current_text_countdown
     index_6+=1
     if index_6>settings.FPS :
-        tablet_screen.fill(pygame.Color("Black"))
-        current_countdown-=1
-        write_time_on_watch()
-        write_on_smartphone(get_countdown_as_string())
-        write_time_on_tablet()
-        if current_countdown==0 :
+        if current_countdown>0 :
+            current_countdown-=1
+            write_time_on_watch()
+            write_on_smartphone(get_countdown_as_string())
+            write_time_on_tablet()
+        else :
+            tablet_screen.fill(pygame.Color("Black"))
             write_txt_on_watch()
             write_on_smartphone("MEH")
             write_text_on_tablet()
@@ -208,8 +208,8 @@ def update_6() :
             if current_text_countdown==0 :
                 current_text_countdown=text_countdown
                 current_countdown = total_countdown
+                tablet_screen.fill(pygame.Color("Black"))
         index_6=0
-        pygame.display.update()
 
 #D.2.7 - Data Center
 led_server = [
@@ -267,17 +267,17 @@ def update_7() :
 
 on = True
 CLOCK = pygame.time.Clock()
-SCREEN = pygame.display.set_mode(settings.SCREEN_SIZE,pygame.FULLSCREEN)
 
 while on :
 
-    SCREEN.fill(pygame.Color("Black"))
-
-    fps = str(round(CLOCK.get_fps(),1))
-    txt = "DEBUG MODE | FPS : "+fps
-    to_blit=tablet_font.render(txt,1,pygame.Color("White"),pygame.Color("Black"))
-    SCREEN.blit(to_blit,(0,0))
-
+    #Event handling
+    for event in pygame.event.get():
+        keys = pygame.key.get_pressed()
+        if event.type == pygame.QUIT:
+            on = False
+        if keys[pygame.K_ESCAPE] : # ECHAP : Quitter
+            on=False
+    
     #D.2.1 - Boite Mail
     update_1()
     #D.2.2 - Cookies
@@ -287,6 +287,12 @@ while on :
     #D.2.5 - Surveillance Numérique
     update_5()
     #D.2.6 - Obsolescence programmée
+    #tablet_screen.fill(pygame.Color("Black"))
+    
+    fps = str(round(CLOCK.get_fps(),1))
+    txt = "FPS : "+fps
+    to_blit=tablet_txt_font.render(txt,1,pygame.Color("White"),pygame.Color("Black"))
+    tablet_screen.blit(to_blit,(0,0))
     update_6()
     #D.2.7 - Data Center
     update_7()
@@ -294,8 +300,9 @@ while on :
     #D.2.9 - IA
 
     #General
+    pygame.display.flip()
     CLOCK.tick(settings.FPS)
-    pygame.display.update()
-
-
+    
+buzzer_1.on=False
+buzzer_1.join()
 

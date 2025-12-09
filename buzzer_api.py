@@ -63,6 +63,31 @@ class Sound(Thread) :
         play_music(self.buzzer,self.sound,self.interval)
         print("finished")
 
+class Buzzer(Thread) :
+    def __init__(self,pin,octaves=3,interval=0.1) :
+        Thread.__init__(self)
+        self.on=True
+        self.pin=pin
+        self.buzzer = gpio.TonalBuzzer(self.pin,octaves=3)
+        self.interval=interval
+        self.timer=0
+        self.working=False
+    def run(self) :
+        print(f"Launching Buzzer at pin {self.pin}")
+        while self.on :
+            time.sleep(1)
+            self.timer+=1
+            print(self.timer)
+            if self.timer>30 and self.buzzer.value==None :
+                self.working=True
+                self.buzzer.close()
+                self.buzzer = gpio.TonalBuzzer(self.pin,octaves=3)
+                self.timer=0
+                self.working=False
+    def play(self,sound,interval=0.1) :
+        if self.working == False :
+            play_music(self.buzzer,sound,interval)
+
 if __name__=="__main__" :
     #CONSTANTS
     PIN=13 #BOARD33
