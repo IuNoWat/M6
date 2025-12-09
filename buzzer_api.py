@@ -8,11 +8,6 @@ from threading import Thread
 import gpiozero as gpio
 from gpiozero.tones import Tone
 
-#CONSTANTS
-PIN=13 #BOARD33
-
-#INIT
-buzzer = gpio.TonalBuzzer(PIN,octaves=3)
 
 #EXAMPLE MUSIC
 #A music consists of a list of dict, each containing a note and a time multiplied by the interval defined in play_music()
@@ -41,46 +36,7 @@ default_notif = [
 {"note":"A6","time":1}
 ]
 
-notifs = [
-    [
-        {"note":"D4","time":1},
-        {"note":"A6","time":1}
-    ],
-    [
-        {"note":"E4","time":1},
-        {"note":"D5","time":1},
-        {"note":"D6","time":1}
-    ],
-    [
-        {"note":"A4","time":1},
-        {"note":"D6","time":1}
-    ],
-    [
-        {"note":"D4","time":1},
-        {"note":"A6","time":1},
-        {"note":"D5","time":1}
-    ],
-    [
-        {"note":"A6","time":1},
-        {"note":"D4","time":1}
-    ],
-    [
-        {"note":"D6","time":1},
-        {"note":"D5","time":1},
-        {"note":"E4","time":1}
-    ],
-    [
-        {"note":"D6","time":1},
-        {"note":"A4","time":1}
-    ],
-    [
-        {"note":"A6","time":1},
-        {"note":"D4","time":1},
-        {"note":"D5","time":1}
-    ]
-]
-
-def play_note(note,duree) : #To play a singular note for the duration of duree
+def play_note(buzzer,note,duree) : #To play a singular note for the duration of duree
     print(f"playing {note} for {duree}")
     if note==" " :
         time.sleep(duree)
@@ -91,22 +47,53 @@ def play_note(note,duree) : #To play a singular note for the duration of duree
         buzzer.stop()
     print("finished the note")
 
-def play_music(music=default_music,base_interval=0.15) : #To play a music as described in DEFAULT_MUSIC
+def play_music(buzzer,music=default_music,base_interval=0.15) : #To play a music as described in DEFAULT_MUSIC
     for i,note in enumerate(music) :
-        play_note(note["note"],base_interval*note["time"])
+        play_note(buzzer,note["note"],base_interval*note["time"])
 
 class Sound(Thread) :
-    def __init__(self,sound,interval=0.1) :
+    def __init__(self,buzzer,sound,interval=0.1) :
         Thread.__init__(self)
         self.on=True
+        self.buzzer=buzzer
         self.sound=sound
         self.interval=interval
     def run(self) :
         print("start")
-        play_music(self.sound,self.interval)
+        play_music(self.buzzer,self.sound,self.interval)
         print("finished")
 
+class Buzzer(Thread) :
+    def __init__(self,pin,octaves=3,interval=0.1) :
+        Thread.__init__(self)
+        self.on=True
+        self.pin=pin
+        self.buzzer = gpio.TonalBuzzer(self.pin,octaves=3)
+        self.interval=interval
+        self.timer=0
+        self.working=False
+    def run(self) :
+        print(f"Launching Buzzer at pin {self.pin}")
+        while self.on :
+            time.sleep(1)
+            self.timer+=1
+            print(self.timer)
+            if self.timer>30 and self.buzzer.value==None :
+                self.working=True
+                self.buzzer.close()
+                self.buzzer = gpio.TonalBuzzer(self.pin,octaves=3)
+                self.timer=0
+                self.working=False
+    def play(self,sound,interval=0.1) :
+        if self.working == False :
+            play_music(self.buzzer,sound,interval)
+
 if __name__=="__main__" :
+    #CONSTANTS
+    PIN=13 #BOARD33
+
+    #INIT
+    buzzer = gpio.TonalBuzzer(PIN,octaves=3)
     play_music()
 
     #play_all_notes(0.1)

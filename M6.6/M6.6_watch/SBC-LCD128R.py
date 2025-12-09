@@ -31,7 +31,7 @@ try:
     draw.line([(227,120),(239,120)], fill = (39,92,107),width = 4)
 
     # Reference font file and draw text
-    Font = ImageFont.truetype("SourceSansPro.ttf",35)
+    Font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",35)
     draw.text((70, 50), 'Joy-IT', fill = (39,92,107),font=Font)
     
     # Create lines
@@ -41,7 +41,7 @@ try:
  
     disp.ShowImage(image1)
     time.sleep(5)
-    image = Image.open('SampleImage.jpg')	
+    image = Image.open('/home/pi/Desktop/M6/M6.6/M6.6_watch/SampleImage.jpg')	
     disp.ShowImage(image)
     time.sleep(5)
     disp.module_exit()
