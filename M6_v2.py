@@ -25,6 +25,17 @@ try :
 except IndexError :
     DEBUG=False
 
+#Import Assets
+pygame.mixer.init(48000, -16, 1, 4096)
+notifs = [
+    pygame.mixer.Sound("/home/pi/Desktop/M6/media/1.mp3"),
+    pygame.mixer.Sound("/home/pi/Desktop/M6/media/2.mp3"),
+    pygame.mixer.Sound("/home/pi/Desktop/M6/media/3.mp3"),
+    pygame.mixer.Sound("/home/pi/Desktop/M6/media/4.mp3"),
+    pygame.mixer.Sound("/home/pi/Desktop/M6/media/5.mp3"),
+    pygame.mixer.Sound("/home/pi/Desktop/M6/media/6.mp3")
+]
+
 #GPIO Config
 #D.2.1 - Boite Mail
 buzzer_1 = buzzer_api.Buzzer(settings.GPIO_BUZZER_1)
@@ -59,7 +70,8 @@ server_fan = gpio.OutputDevice(settings.GPIO_FAN_7)
 #D.2.1 - Boite Mail
 
 def play_notif() :
-    buzzer_1.play(random.choice(settings.buzzer_notif_sounds))
+    #buzzer_1.play(random.choice(settings.buzzer_notif_sounds))
+    random.choice(notifs).play()
 
 index_1 = 0
 
