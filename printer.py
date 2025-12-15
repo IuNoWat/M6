@@ -1,5 +1,6 @@
 import serial
 import adafruit_thermal_printer as printer_api
+import time
 
 def find_all_space(line) :
     to_return=[]
@@ -75,15 +76,17 @@ class Printer() :
 
 
 if __name__ == "__main__" :
+
     thermal = Printer()
-    thermal.printer.feed(2)
+    thermal.printer.feed(1)
     thermal.print_lines("Discussion 45 789",size=printer_api.SIZE_MEDIUM,justify=printer_api.JUSTIFY_CENTER)
-    thermal.printer.feed(2)
+    thermal.printer.feed(1)
     thermal.print_lines("Operateur : Je te repose la question, es-tu un outil respectueux de l'environnement ?")
     thermal.printer.feed(1)
     thermal.print_lines("IA : Non, je ne suis pas un outil respectueux de l'environnement au sens strict. L'IA consomme de l'energie pour fonctionner, donc je ne peux pas etre considere comme \"ecologique\"",tab=4)
-    thermal.printer.feed(2)
+    thermal.printer.feed(1)
     thermal.print_lines("Cout carbone : 458g",size=printer_api.SIZE_MEDIUM,justify=printer_api.JUSTIFY_CENTER)
-    thermal.printer.feed(2)
+    thermal.printer.feed(1)
+    thermal.print_lines("----------",size=printer_api.SIZE_MEDIUM,justify=printer_api.JUSTIFY_CENTER)
 
 
