@@ -5,14 +5,11 @@ DIR="/home/pi/Desktop/"
 SCREEN_SIZE=(1024, 600)
 
 #GAMEPLAY
-TIMING_NOTIF_1 = FPS/3
+TIMING_NOTIF_1 = FPS/6
 TIMING_LED_CHANGING_3 = FPS/3
 TIMING_LED_BLINK_5 = FPS/5
-
-TIMING_SERVER_ANIM_7 = FPS/2
-
-TOTAL_COUNTDOWN_6 = 10
-TEXT_COUNTDOWN_6 = 20
+TOTAL_COUNTDOWN_6 = 80
+TEXT_COUNTDOWN_6 = 15
 txt_6 = [
     "Votre appareil",
     "est trop vieux.",
@@ -20,6 +17,9 @@ txt_6 = [
     "en acheter un",
     "autre"
 ]
+TIMING_SERVER_ANIM_7 = FPS/2
+TIMING_PRINTER_9 = FPS*30
+
 
 
 
@@ -27,6 +27,7 @@ txt_6 = [
 GPIO_LEDSTRIP = 21 #GPIO21, BOARD40
 #D.2.1 - Boite Mail
 GPIO_BUZZER_1 = 13 #"BOARD33" #GPIO13
+GPIO_INT_1 = 12
 #D.2.2 - Cookies
 
 #D.2.3 - Streaming

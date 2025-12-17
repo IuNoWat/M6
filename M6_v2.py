@@ -11,7 +11,8 @@ import rpi_ws281x as rpi
 import serial
 
 from lib import LCD_1inch28
-import buzzer_api
+#import buzzer_api
+import adafruit_thermal_printer as printer_api
 from tools import *
 import settings
 
@@ -38,8 +39,9 @@ notifs = [
 
 #GPIO Config
 #D.2.1 - Boite Mail
-buzzer_1 = buzzer_api.Buzzer(settings.GPIO_BUZZER_1)
-buzzer_1.start()
+#buzzer_1 = buzzer_api.Buzzer(settings.GPIO_BUZZER_1)
+#buzzer_1.start()
+mail_btn = gpio.Button(settings.GPIO_INT_1)
 
 #D.2.2 - Cookies
 
@@ -79,8 +81,9 @@ def update_1() :
     global index_1
     index_1+=1
     if index_1>settings.TIMING_NOTIF_1 :
-        if random.randrange(0,3)==False :
-            play_notif()
+        if mail_btn.is_pressed==False :
+            if random.randrange(0,3)==False :
+                play_notif()
         index_1=0
 
 #D.2.2 - Cookies
@@ -143,14 +146,14 @@ def get_countdown_as_string() : #Get time as showable string
 disp = LCD_1inch28.LCD_1inch28()
 disp.Init() # Initialize library.
 disp.clear() # Clear display.
-font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",100) #Countdown font
+font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",90) #Countdown font
 txt_font = ImageFont.truetype("/home/pi/Desktop/M6/M6.6/M6.6_watch/SourceSansPro.ttf",30) #Text font
 
 def write_time_on_watch() : #Show time on round display
     to_show=get_countdown_as_string()
     img = Image.new("RGB", (disp.width, disp.height), "BLACK") # Create blank image for drawing.
     draw = ImageDraw.Draw(img)
-    draw.text((30, 65), to_show, fill = (255,255,255),font=font)
+    draw.text((25, 65), to_show, fill = (255,255,255),font=font)
     disp.ShowImage(img)
 
 def write_txt_on_watch() :
@@ -273,7 +276,123 @@ def update_7() :
 #D.2.8 -  Terres Rares
 
 #D.2.9 - IA
+class IA_printer() :
+    def __init__(self) :
+        self.serial = serial.Serial("/dev/serial0", baudrate=19200, timeout=3000)
+        self.printer_class = printer_api.get_printer_class(0)
+        self.printer = self.printer_class(self.serial)
+        self.index=0
+        self.line_to_send = [
+            {
+                "txt" :"feed",
+                "args":[1]
+            },
+            {
+                "txt" :"Discussion 45 789",
+                "args":["size_medium","justify_center"]
+            },
+            {
+                "txt" :"feed",
+                "args":[1]
+            },
+            {
+                "txt" :"Operateur : Je te repose la",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"question, es-tu un outil",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"respectueux de l'environnement ?",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"feed",
+                "args":[1]
+            },
+            {
+                "txt" :"    IA : Non, je ne suis pas un",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"    outil respectueux de",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"    l'environnement au sens",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"    strict. L'IA consomme de",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"    l'energie pour fonctionner,",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"    donc je ne peux pas etre",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"    considere comme \"ecologique\"",
+                "args":["size_small","justify_left"]
+            },
+            {
+                "txt" :"feed",
+                "args":[1]
+            },
+            {
+                "txt" :"Cout carbone : 458g",
+                "args":["size_medium","justify_center"]
+            },
+            {
+                "txt" :"feed",
+                "args":[1]
+            },
+            {
+                "txt" :"----------",
+                "args":["size_medium","justify_center"]
+            },
+            
+        ]
+    def print_one_line(self) :
+        self.index+=1
+        if self.index==len(self.line_to_send) :
+            self.index=0
+        to_print = self.line_to_send[self.index]
+        if to_print["txt"]=="feed" :
+            self.printer.feed(to_print["args"][0])
+        else :
+            for arg in to_print["args"] :
+                match arg :
+                    case "size_small" :
+                        self.printer.size = printer_api.SIZE_SMALL
+                    case "size_medium" :
+                        self.printer.size = printer_api.SIZE_MEDIUM
+                    case "size_big" :
+                        self.printer.size = printer_api.SIZE_BIG
+                    case "justify_left" :
+                        self.printer.justify = printer_api.JUSTIFY_LEFT
+                    case "justify_center" :
+                        self.printer.justify = printer_api.JUSTIFY_CENTER
+                    case "justify_right" :
+                        self.printer.justify = printer_api.JUSTIFY_RIGHT
+                    case _ :
+                        print(f"Unknown arg : {arg}")
+            self.printer.print(to_print["txt"])
 
+printer = IA_printer()
+
+index_9 = 0
+
+def update_9() :
+    global index_9
+    index_9+=1
+    if index_9>settings.TIMING_PRINTER_9 :
+        printer.print_one_line()
+        index_9=0
 
 #----- GENERAL LOOP -----#
 
@@ -301,15 +420,16 @@ while on :
     #D.2.6 - Obsolescence programmée
     #tablet_screen.fill(pygame.Color("Black"))
     
-    fps = str(round(CLOCK.get_fps(),1))
-    txt = "FPS : "+fps
-    to_blit=tablet_txt_font.render(txt,1,pygame.Color("White"),pygame.Color("Black"))
-    tablet_screen.blit(to_blit,(0,0))
+    #fps = str(round(CLOCK.get_fps(),1))
+    #txt = "FPS : "+fps
+    #to_blit=tablet_txt_font.render(txt,1,pygame.Color("White"),pygame.Color("Black"))
+    #tablet_screen.blit(to_blit,(0,0))
     update_6()
     #D.2.7 - Data Center
     update_7()
     #D.2.8 -  Terres Rares
     #D.2.9 - IA
+    update_9()
 
     #General
     pygame.display.flip()

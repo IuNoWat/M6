@@ -67,6 +67,11 @@ class Printer() :
             print(line)
         for line in to_print :
             self.printer.print(line)
+    
+    def print_line(self,txt,flags=[],size=printer_api.SIZE_SMALL,justify=printer_api.JUSTIFY_LEFT,tab=0) :
+        self.printer.size = size
+        self.printer.justify = justify
+        self.printer.print(line)
 
 
 
